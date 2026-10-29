@@ -1,0 +1,27 @@
+{
+  "rewrites": [
+    {
+      "source": "/nebius/:path*",
+      "destination": "/api/nebius?path=:path*"
+    },
+    {
+      "source": "/asr",
+      "destination": "/api/asr"
+    },
+    {
+      "source": "/tavily/search",
+      "destination": "/api/tavily"
+    }
+  ],
+  "functions": {
+    "api/nebius.js": {
+      "maxDuration": 60
+    },
+    "api/asr.js": {
+      "maxDuration": 60
+    },
+    "api/tavily.js": {
+      "maxDuration": 30
+    }
+  }
+}

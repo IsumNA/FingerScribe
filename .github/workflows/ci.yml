@@ -1,0 +1,39 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Python compiles
+        run: python -m py_compile app/serve.py cloud/asr/server.py cloud/training/*.py
+      - name: Serverless proxies parse
+        run: for f in app/api/*.js; do node --check "$f"; done
+      - name: JSON assets are valid
+        run: for f in app/*.json app/*.webmanifest; do python -m json.tool "$f" > /dev/null || exit 1; done
+      - name: App scripts parse
+        run: |
+          python - <<'PY'
+          import re, subprocess, pathlib
+          html = pathlib.Path("app/index.html").read_text(encoding="utf-8")
+          for i, js in enumerate(re.findall(r"<script>(.*?)</script>", html, re.S)):
+              p = pathlib.Path(f"/tmp/app{i}.js"); p.write_text(js, encoding="utf-8")
+              subprocess.run(["node", "--check", str(p)], check=True)
+          print("ok")
+          PY
+      - name: No secrets committed
+        run: |
+          ! git grep -nE "(tvly-[A-Za-z0-9]{10,}|Bearer [A-Za-z0-9_.-]{30,}|sk-[A-Za-z0-9]{20,})" -- . ':!.github'
+      - name: Firmware compiles
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh -s 1.1.1
+          export PATH=$PWD/bin:$PATH
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+          arduino-cli core update-index && arduino-cli core install Seeeduino:mbed@2.9.3
+          arduino-cli lib install ArduinoBLE@2.1.0
+          arduino-cli compile --fqbn Seeeduino:mbed:xiaonRF52840Sense firmware/fingerscribe_ble

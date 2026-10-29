@@ -1,0 +1,28 @@
+# Keys and endpoint tokens: never commit
+*.key
+*_key.txt
+parakeet.txt
+.env
+.env.*
+!.env.example
+
+# Trained on-phone models: kept private (see README > Weights)
+app/model.json
+app/letters.json
+app/touch.json
+app/words_reader*.json
+
+# Recordings and training outputs
+*.tgz
+*.npz
+*.h5
+captures/
+data/
+
+# Tooling
+__pycache__/
+*.pyc
+.vercel/
+node_modules/
+.DS_Store
+Thumbs.db
