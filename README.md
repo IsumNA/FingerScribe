@@ -28,10 +28,20 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/fingerscribe-sleeve-mockup.png" width="49%" alt="Concept render of the FingerScribe sleeve on an index finger">
-  <img src="docs/images/fingerscribe-app-redesign.png" width="49%" alt="The FingerScribe app in light and dark mode, with Nemotron word suggestions">
+  <img src="docs/images/sleeve-on-finger.jpg" width="32%" alt="The FingerScribe sleeve on an index finger">
+  <img src="docs/images/exploded-assembly.jpg" width="32%" alt="Exploded view: sleeve shell, XIAO nRF52840 Sense board and battery">
+  <img src="docs/images/charging.jpg" width="32%" alt="The sleeve charging over USB-C">
 </p>
-<p align="center"><sub>Left: concept render of the production sleeve. Right: the app. The working prototype is shown in the demo video.</sub></p>
+<p align="center">
+  <img src="docs/images/writing-on-desk.jpg" width="32%" alt="Writing on a desk with the sleeve while the phone shows the text">
+  <img src="docs/images/mid-conversation.jpg" width="32%" alt="Taking a note on your hand mid-conversation">
+  <img src="docs/images/voice-note.jpg" width="32%" alt="Holding the sleeve's button to speak a note">
+</p>
+<p align="center">
+  <img src="docs/images/app-notes.jpg" width="24%" alt="The FingerScribe app: notes">
+  <img src="docs/images/app-mind-map.jpg" width="24%" alt="The FingerScribe app: mind map drawn by Nemotron">
+</p>
+<p align="center"><sub>The working prototype: on the finger, its parts, charging, in use, and the app. Full demo in the video below.</sub></p>
 
 ---
 
