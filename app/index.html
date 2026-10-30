@@ -298,6 +298,17 @@ body{background:var(--n-bg)}
 .nbody{font:400 28px/1.45 var(--n-font);letter-spacing:-.02em;caret-color:var(--n-ink)}
 .ghost{opacity:1;color:var(--n-sub)}
 .nbody .w{position:relative;border-radius:4px;transition:background-color .25s ease,color .25s ease}
+.nbody{--n-heal:#fff;--n-heal-glow:rgba(17,17,17,.45);--n-heal-sweep:rgba(255,255,255,.95)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .nbody{--n-heal-glow:rgba(255,255,255,.7);--n-heal-sweep:rgba(255,255,255,.18)}}
+:root[data-theme="dark"] .nbody{--n-heal-glow:rgba(255,255,255,.7);--n-heal-sweep:rgba(255,255,255,.18)}
+.nbody .healing{display:inline-block;white-space:pre;position:relative}
+.nbody .hl{display:inline-block;will-change:transform}
+.nbody .healing::before{content:'';position:absolute;inset:-3px -6px;border-radius:8px;pointer-events:none;
+  background:linear-gradient(100deg,transparent 30%,var(--n-heal-sweep) 50%,transparent 70%);background-size:250% 100%;
+  animation:healsweep 1.1s cubic-bezier(.3,.6,.3,1) both}
+@keyframes healsweep{from{background-position:120% 0;opacity:0}30%{opacity:1}to{background-position:-30% 0;opacity:0}}
+.heal-layer{position:fixed;inset:0;pointer-events:none;z-index:50}
+.heal-layer span{position:absolute;white-space:pre}
 .nbody .w.burst{text-decoration:underline 2px color-mix(in srgb,var(--n-ink) 28%,transparent);text-underline-offset:5px}
 .nbody .w.stamp::after{content:attr(data-ts);position:absolute;left:50%;bottom:100%;transform:translate(-50%,4px);white-space:nowrap;pointer-events:none;
   font:400 12px/1 var(--n-mono);letter-spacing:.02em;color:var(--n-inv);background:var(--n-ink);padding:5px 8px;border-radius:999px;margin-bottom:6px;
@@ -342,6 +353,25 @@ body{background:var(--n-bg)}
 .tklive{min-height:24px;padding:0 20px 6px;color:var(--n-sub);font:400 15px/1.4 var(--n-font);text-align:center}
 .dsave a{color:var(--n-acc);text-decoration:none}
 #tLetter.sentence{font-size:clamp(22px,5.5vw,34px)!important;line-height:1.25;letter-spacing:-.01em;max-width:92vw;text-wrap:balance}
+
+/* (29 Oct) release polish */
+.ntool{backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);background:color-mix(in srgb,var(--n-bg) 72%,transparent)}
+.nbar{backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px)}
+.sheet h2{font:700 28px/1.15 var(--n-font,var(--f-ui));letter-spacing:-.01em;margin:4px 0 4px}
+.sheet .sec p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.sheet .sub{font:500 14px/1.2 var(--f-ui);color:var(--ink);margin-top:6px}
+.pill{min-height:36px;display:inline-flex;align-items:center;justify-content:center;transition:transform .12s ease,opacity .12s ease}
+.pill:active{transform:scale(.97);opacity:.85}
+.pill.ghost{box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 22%,transparent)}
+.sec.adv{border-bottom:0}
+.sec.adv summary{list-style:none;cursor:pointer;font:500 12px/1 var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;justify-content:space-between}
+.sec.adv summary::-webkit-details-marker{display:none}
+.sec.adv summary::after{content:"";width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-right:4px;transition:transform .2s}
+.sec.adv[open] summary::after{transform:rotate(-135deg)}
+.advbody{display:grid;gap:10px;padding-top:14px}
+.nrow b{letter-spacing:-.005em}
+.dempty,.nempty{line-height:1.5}
+@media (prefers-reduced-motion: reduce){.pill{transition:none}}
 </style>
 </head>
 <body>
@@ -499,28 +529,15 @@ body{background:var(--n-bg)}
       <div class="line"><button class="pill" id="connect">Connect pen</button><span class="mono" id="btStat"></span></div>
     </div>
     <div class="sec">
-      <span class="lbl" >Train your pen</span>
-      <p>The more of your own writing it has seen, the better it reads you. Write what it shows in your normal style, then tap Save: the file goes to Downloads, send it to Claude to retrain. Sentences help most with fast, joined writing (30 sentences, about 5 minutes).</p>
-      <div class="line"><button class="pill" id="openTeachPrint">Words in print</button><button class="pill" id="openTeachWords">Words joined-up</button><button class="pill" id="openTeachSent">Sentences</button><button class="pill ghost" id="openTeach">Single letters</button></div>
+      <span class="lbl">Writing</span>
+      <span class="sub">Finish words early</span>
+      <p>Nemotron guesses your next word. Once you've written half of it and the motion matches, the whole word appears, underlined in green.</p>
+      <div class="line"><button class="pill" id="earlyOn">On</button><button class="pill ghost" id="earlyOff">Off</button></div>
     </div>
     <div class="sec">
       <span class="lbl">Your sleeve is learning</span>
       <p id="learnInfo">Nothing learned yet. Every word Nemotron fixes teaches the sleeve which of your letters it misreads. You never train it.</p>
-      <div class="line"><button class="pill ghost" id="learnReset">Forget what it learned</button><button class="pill ghost" id="learnCopy">Copy fix log</button></div>
-    </div>
-    <div class="sec">
-      <span class="lbl">Word locking</span>
-      <p>Instant: a word is fixed the moment you start the next one (fastest, may lock a misread). Careful: waits until two readings agree (a little slower, more accurate).</p>
-      <div class="line"><button class="pill" id="lockInstant">Instant</button><button class="pill ghost" id="lockCareful">Careful</button></div>
-    </div>
-    <div class="sec">
-      <label for="key">NVIDIA Nemotron on Nebius</label>
-      <p id="aiInfo">Your handwriting is read on this device, instantly. NVIDIA Nemotron (on Nebius Token Factory) then fixes misread words using the sentence around them, finishes words early, links each note to related earlier ones, draws your mind map, tidies notes and transcribes voice notes. Started with start.bat, it uses the key on your PC; otherwise paste a key here.</p>
-      <div class="line"><input type="password" id="key" placeholder="v1.…" autocomplete="off" spellcheck="false"><button class="pill ghost" id="saveKey">Save key</button></div>
-      <span class="mono" id="keyStat"></span>
-      <span class="lbl" style="margin-top:8px">Finish words early</span>
-      <p>Nemotron guesses your next word. Once you've written half of it and the motion matches, the whole word appears, underlined in green.</p>
-      <div class="line"><button class="pill" id="earlyOn">On</button><button class="pill ghost" id="earlyOff">Off</button></div>
+      <div class="line"><button class="pill ghost" id="learnReset">Forget what it learned</button></div>
     </div>
     <div class="sec">
       <label for="voice">Reading voice</label>
@@ -530,13 +547,33 @@ body{background:var(--n-bg)}
     </div>
     <div class="sec">
       <span class="lbl">Journal</span>
-      <div class="line"><button class="pill ghost" id="copyAll">Copy all entries</button><button class="pill ghost" id="clearAll">Delete all…</button></div>
-      <span class="lbl" style="margin-top:8px">Test recording</span>
-      <p>Type what you're about to do, tap Start, do it, then tap Stop &amp; save. Only what happens between Start and Stop is saved, to your Downloads folder.</p>
-      <div class="line"><input type="text" id="recText" placeholder="e.g. cat milk book" autocomplete="off"><button class="pill" id="saveRec">● Start</button></div>
-      <span class="mono" id="recStat"></span>
+      <div class="line"><button class="pill ghost" id="copyAll">Copy all notes</button><button class="pill ghost" id="clearAll">Delete all…</button></div>
       <div class="line" id="clearConfirm" hidden><span class="mono">Delete every entry? This can't be undone.</span><button class="pill" id="clearYes" style="background:var(--danger)">Delete all</button><button class="pill ghost" id="clearNo">Keep</button></div>
     </div>
+    <div class="sec">
+      <span class="lbl">About</span>
+      <p id="aiInfo">Your handwriting is read on this device, instantly. NVIDIA Nemotron (on Nebius Token Factory) then fixes misread words using the sentence around them, finishes words early, links each note to related earlier ones, draws your mind map, tidies notes and transcribes voice notes.</p>
+    </div>
+    <details class="sec adv" id="advanced">
+      <summary>Advanced</summary>
+      <div class="advbody" id="advBody">
+        <span class="sub">Nebius key</span>
+        <div class="line"><input type="password" id="key" placeholder="v1.…" autocomplete="off" spellcheck="false"><button class="pill ghost" id="saveKey">Save key</button></div>
+        <span class="mono" id="keyStat"></span>
+        <span class="sub">Word locking</span>
+        <p>Instant: a word is fixed the moment you start the next one (fastest, may lock a misread). Careful: waits until two readings agree (a little slower, more accurate).</p>
+      <div class="line"><button class="pill" id="lockInstant">Instant</button><button class="pill ghost" id="lockCareful">Careful</button></div>
+        <span class="sub">Teach your pen</span>
+        <p>The more of your own writing it has seen, the better it reads you. Write what it shows in your normal style, then tap Save: the recording goes to your Downloads folder. Sentences help most with fast, joined writing (30 sentences, about 5 minutes).</p>
+      <div class="line"><button class="pill" id="openTeachPrint">Words in print</button><button class="pill" id="openTeachWords">Words joined-up</button><button class="pill" id="openTeachSent">Sentences</button><button class="pill ghost" id="openTeach">Single letters</button></div>
+        <span class="sub">Fix log</span>
+        <div class="line"><button class="pill ghost" id="learnCopy">Copy fix log</button></div>
+        <span class="sub">Test recording</span>
+        <p>Type what you're about to do, tap Start, do it, then tap Stop &amp; save. Only what happens between Start and Stop is saved, to your Downloads folder.</p>
+      <div class="line"><input type="text" id="recText" placeholder="e.g. cat milk book" autocomplete="off"><button class="pill" id="saveRec">● Start</button></div>
+      <span class="mono" id="recStat"></span>
+      </div>
+    </details>
   </div>
 </section>
 
@@ -752,8 +789,17 @@ function startDictation() {
   rec = new SR(); rec.lang = navigator.language || 'en-GB'; rec.continuous = true; rec.interimResults = true;
   recText = ''; live.mode = 'listen'; live.words = []; live.glyphs = []; live.interim = ''; showLive();
   rec.onresult = ev => {
-    let fin = '', int = '';
-    for (let i = 0; i < ev.results.length; i++) { const r = ev.results[i]; (r.isFinal ? (fin += r[0].transcript + ' ') : (int += r[0].transcript)); }
+    // Android Chrome repeats each phrase as it grows, often marked final every time; keep only the longest version
+    const norm = t => t.toLowerCase().replace(/[^a-z0-9' ]/g, '').replace(/\s+/g, ' ').trim();
+    const parts = [];
+    for (let i = 0; i < ev.results.length; i++) {
+      const r = ev.results[i], t = (r[0].transcript || '').trim(); if (!t) continue;
+      const last = parts[parts.length - 1], n = norm(t);
+      if (last && n.startsWith(norm(last.t))) { last.t = t; last.f = r.isFinal; }       // same phrase, grown
+      else if (last && norm(last.t).startsWith(n)) continue;                            // same phrase, shorter copy
+      else parts.push({ t, f: r.isFinal });
+    }
+    const fin = parts.filter(x => x.f).map(x => x.t).join(' '), int = parts.filter(x => !x.f).map(x => x.t).join(' ');
     recText = fin.trim(); live.words = recText ? [recText] : []; live.interim = int; showLive();
     if (typeof dictUpdate === 'function') dictUpdate(recText, int);
   };
@@ -829,7 +875,7 @@ async function transcribeWav(b64) {
   return out.replace(/^["“]|["”]$/g, '').trim();
 }
 $('key').value = settings.key;
-proxyCheck.then(ok => { if (ok) $('keyStat').textContent = 'Connected through start.bat: Nemotron is on.'; });
+proxyCheck.then(ok => { if (ok) $('keyStat').textContent = 'Nemotron is on.'; });
 $('saveKey').onclick = async () => {
   settings.key = $('key').value.trim(); settings.models = null; saveSettings();
   if (!settings.key) { $('keyStat').textContent = 'Key removed.'; return; }
@@ -1202,7 +1248,9 @@ class WordReader {
     out.ends = [this.t0 + lp.length * 40];
     if (this.lm) {                     // word-pair knowledge: which words tend to follow which (bigram), so "the ring" beats "thing"
       const LM = this.lm, LW = this.lmw ?? 2, FL = -(this.lmfloor ?? 3);
-      const bon = (u, w) => { const r = LM.pmi[u]; if (r && r[w] !== undefined) return r[w]; const b = LM.bo[u]; return b === undefined ? 0 : Math.max(b, FL); };
+      if (!LM.known) { LM.known = new Set(Object.keys(LM.pmi)); for (const r of Object.values(LM.pmi)) for (const k in r) LM.known.add(k); }
+      // (29 Oct) words the English counts never saw (fingerscribe, nemotron, names) get no penalty: unseen is not unlikely for them
+      const bon = (u, w) => { if (!LM.known.has(w)) return 0; const r = LM.pmi[u]; if (r && r[w] !== undefined) return r[w]; const b = LM.bo[u]; return b === undefined ? 0 : Math.max(b, FL); };
       const mk = keep.length && keep.every(w => this.lf.has(w)) ? keep.length : 0;     // words already locked at the start: forced
       const F = Array.from({ length: K }, () => new Map()); F[0].set('0|' + (this.ctx || '<s>'), { s: 0, bk: null, n: 0, w: this.ctx || '<s>' });
       const segc = new Map(), seg = (i, j) => { const k = i * 1000 + j; if (!segc.has(k)) segc.set(k, this.best(lp.slice(B[i], B[j]))); return segc.get(k); };
@@ -1402,7 +1450,72 @@ function readerMotion(s, busy) {
 }
 const APOS = {"im": "I'm", "ive": "I've", "dont": "don't", "cant": "can't", "wont": "won't", "didnt": "didn't", "doesnt": "doesn't", "isnt": "isn't", "wasnt": "wasn't", "arent": "aren't", "couldnt": "couldn't", "wouldnt": "wouldn't", "shouldnt": "shouldn't", "havent": "haven't", "thats": "that's", "whats": "what's", "theres": "there's", "youre": "you're", "theyre": "they're", "lets": "let's", "youll": "you'll", "weve": "we've", "youve": "you've", "itll": "it'll", "aint": "ain't"};   // the reader has no apostrophe, so contractions come out as 'im', 'dont' ... shown properly here
 const LOCK_AFTER = 2;
-const fixWord = w => APOS[w] || (w === 'i' ? 'I' : w);
+const BRAND = { fingerscribe: 'FingerScribe', nemotron: 'Nemotron', nvidia: 'NVIDIA', nebius: 'Nebius' };
+const CASEW = { fourier: 'Fourier', laplace: 'Laplace', gaussian: 'Gaussian', jacobian: 'Jacobian', hessian: 'Hessian', taylor: 'Taylor', newton: 'Newton' };
+const fixWord = w => APOS[w] || BRAND[w] || CASEW[w] || (w === 'i' ? 'I' : w);
+/* (29 Oct) long special words get split while you're still writing them ("finger sri be"): the first half locks before
+ * the rest exists. After each add, if 2-3 neighbouring words at the end of the note join up into one of these words
+ * (allowing a slip of one letter in five), they're merged back into it, and the heal animation shows the join. */
+/* (29 Oct) everyday words split in two ("meet in" -> meeting, "fr ends" -> friends): if two neighbouring words at the end of
+ * the note join (within one letter) into a dictionary word, and that word fits its neighbours better than the pair does
+ * (word frequency + which words follow which), they're merged. On your recordings: +3 words right, 1 wrong merge. */
+function joinCommon(e) {
+  const R = wordReader; if (!R || !R.lm || settings.joinWords === false) return false;
+  const LM = R.lm; if (!LM.known) return false;
+  const bon = (u, w) => { if (!w || !LM.known.has(w)) return 0; const r = LM.pmi[u]; if (r && r[w] !== undefined) return r[w]; const b = LM.bo[u]; return b === undefined ? 0 : Math.max(b, -3); };
+  const lf = w => R.lf.has(w) ? R.lf.get(w) : -12;
+  if (!R.byLen) { R.byLen = new Map(); for (const [w] of R.vocab) if (w.length >= 5) { const k = w.length + w[0]; if (!R.byLen.has(k)) R.byLen.set(k, []); R.byLen.get(k).push(w); } }
+  const t = e.text || '', from = Math.max(0, t.length - 60), re = /[A-Za-z]+/g, toks = []; let m;
+  re.lastIndex = from; while ((m = re.exec(t))) toks.push([m.index, m.index + m[0].length, m[0].toLowerCase()]);
+  for (let i = toks.length - 2; i >= Math.max(0, toks.length - 4); i--) {
+    const [a0, , a] = toks[i], [, b1, b] = toks[i + 1]; if (!/^ +$/.test(t.slice(toks[i][1], toks[i + 1][0]))) continue;
+    if (BRAND[a] || BRAND[b]) continue;
+    const cat = a + b; let best = null;
+    for (const L of [cat.length, cat.length + 1, cat.length - 1]) for (const w of (R.byLen.get(L + cat[0]) || []))
+      if (WordReader.edit(cat, w) <= 1 && (!best || lf(w) > lf(best))) best = w;
+    if (!best) continue;
+    // (29 Oct) two everyday words that spell another word exactly ("in for" -> inform, "to day") are almost always meant as two words
+    if (best === cat && lf(a) > -8 && lf(b) > -8) continue;
+    const p = i > 0 ? toks[i - 1][2] : '<s>', n = toks[i + 2] ? toks[i + 2][2] : null;
+    const sm = 0.3 * lf(best) + 2 * bon(p, best) + (n ? 2 * bon(best, n) : 0);
+    const ss = 0.3 * lf(a) + 0.3 * lf(b) + 2 * bon(p, a) + 2 * bon(a, b) + (n ? 2 * bon(b, n) : 0);
+    if (sm > ss + 2) {
+      const orig = t.slice(a0, b1), word = /^[A-Z]/.test(orig) ? cap(best) : best, d = word.length - (b1 - a0);
+      e.text = t.slice(0, a0) + word + t.slice(b1);
+      if (e.marks) for (const mk of e.marks) if (mk[0] > a0) mk[0] = Math.max(a0, mk[0] + d);
+      return true;
+    }
+  }
+  return false;
+}
+/* (29 Oct) the reader only knows letters, so write numbers as words: "for five" becomes "for 5" (after at/for/by/until/till/around) */
+const NUMW = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, fifteen: 15, twenty: 20, thirty: 30, forty: 40, fifty: 50 };
+function numberWords(e) {
+  const t = e.text || '', from = Math.max(0, t.length - 40);
+  const tail = t.slice(from).replace(/\b(at|for|by|until|till|around|about)\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty)\b/gi, (m0, p, w) => p + ' ' + NUMW[w.toLowerCase()]);
+  if (tail === t.slice(from)) return false;
+  e.text = t.slice(0, from) + tail; return true;
+}
+function joinSpecial(e) {
+  const t = e.text || '', from = Math.max(0, t.length - 80), re = /[A-Za-z']+/g, toks = []; let m;
+  re.lastIndex = from; while ((m = re.exec(t))) toks.push([m.index, m.index + m[0].length, m[0].toLowerCase()]);
+  const ed = (a, b) => { let D = Array.from({ length: b.length + 1 }, (_, j) => j); for (let i = 1; i <= a.length; i++) { const N2 = [i]; for (let j = 1; j <= b.length; j++) N2.push(Math.min(D[j] + 1, N2[j - 1] + 1, D[j - 1] + (a[i - 1] !== b[j - 1]))); D = N2; } return D[b.length]; };
+  const STOPJ = new Set(['in', 'the', 'with', 'on', 'and', 'which', 'may', 'whose', 'one', 'came', 'closed', 'curled', 'curved', 'shall', 'of', 'to', 'a']);
+  for (let n = 4; n >= 2; n--) for (let i = toks.length - n; i >= Math.max(0, toks.length - 7); i--) {
+    const sp = toks.slice(i, i + n); if (sp.some((x, k) => k && !/^[ \t]+$/.test(t.slice(sp[k - 1][1], x[0])))) continue;
+    const cat = sp.map(x => x[2].replace(/'/g, '')).join('');
+    // (30 Oct) long names get split badly ("tiger sri he", "binge sac rite"): for 10+ letter words allow 4 slips, but never
+    // merge across everyday words like "in"/"the" so real phrases ("fingers in the") are left alone
+    if (sp.some(x => STOPJ.has(x[2]) || BRAND[x[2]])) continue;   // never swallow a word into one that's already right ("FingerScribe is")
+    for (const w in BRAND) if (Math.abs(cat.length - w.length) <= (w.length >= 10 ? 3 : 2) && ed(cat, w) <= (w.length >= 10 ? 4 : Math.max(1, Math.floor(w.length / 5)))) {
+      const a = sp[0][0], b = sp[n - 1][1], d = BRAND[w].length - (b - a);
+      e.text = t.slice(0, a) + BRAND[w] + t.slice(b);
+      if (e.marks) for (const mk of e.marks) if (mk[0] > a) mk[0] = Math.max(a, mk[0] + d);
+      return true;
+    }
+  }
+  return false;
+}
 async function readWordFrom(a, b, mode) {
   // v3 locking (23 Oct, at your request): the faded guess is usually right, so it's locked as soon as possible.
   //  - every word except the newest is locked on the read that shows it
@@ -1636,7 +1749,7 @@ async function sleeveTalkEnd() {
   if (secs < 0.5) { live.mode = null; showLive(); return; }
   let text = '';
   if (aiReady()) { try { live.interim = 'transcribing…'; showLive(); text = await transcribeWav(wavB64(samples)); } catch (e) { toast('Couldn’t transcribe: ' + e.message.slice(0, 80)); } }
-  else toast('Start the app with start.bat (or add a Nebius key in Settings) to transcribe voice notes with Nemotron.');
+  else toast('Voice notes need an internet connection. Try again when you’re online.');
   live.mode = null; live.interim = ''; showLive();
   addEntry(text ? cap(text) : `Voice note, ${secs.toFixed(0)} s (not transcribed)`, 'spoken');
 }
@@ -1651,7 +1764,7 @@ function setSleeve(on, txt) {
   $('sleeveTxt').textContent = txt; $('btStat').textContent = on ? 'Connected' : '';
   $('connect').textContent = on ? 'Disconnect' : 'Connect pen';
 }
-if (!navigator.bluetooth) $('btInfo').textContent = 'This browser can’t use Bluetooth. On iPhone, open this page in the free Bluefy app; Safari blocks Bluetooth for websites. Everything else works here.';
+if (!navigator.bluetooth) $('btInfo').textContent = 'This browser can’t connect to Bluetooth devices. On iPhone, open FingerScribe in the Bluefy app to pair your pen.';
 async function connect() {
   if (!navigator.bluetooth) { openSheet(); return; }
   if (dev && dev.gatt.connected) { dev.gatt.disconnect(); return; }
@@ -1711,9 +1824,28 @@ function demoRender() {
   $('demoSpeak').classList.toggle('on', D.speak); $('demoSpeak').setAttribute('aria-pressed', D.speak);
   const c = dev && dev.gatt && dev.gatt.connected; $('demoConnect').hidden = !!c; $('demoSleeve').textContent = c ? 'sleeve on' : 'sleeve off';
 }
+// (30 Oct) say what the note will show, not the raw pieces: run the same joins the note uses ("finger scare" -> FingerScribe)
+// on the last few words, and speak from the first word that changed (so a join with an earlier word says the whole word)
+function spokenWords(add) {
+  // D.said = the words already spoken, AFTER joining. Only the joined words that are new (or that changed because a new
+  // piece joined onto them) are spoken, so nothing is repeated.
+  const said = D.said || (D.said = []), prev = said.slice(-5);
+  clearTimeout(D.holdT); if (D.hold) { add = [D.hold, ...add]; D.hold = null; }
+  try {
+    const tmp = { text: prev.concat(add).join(' ') }; joinSpecial(tmp); while (joinCommon(tmp)); if (settings.numbers !== false) numberWords(tmp);
+    const out = tmp.text.split(/\s+/).filter(Boolean); let k = 0; while (k < prev.length && k < out.length && out[k] === prev[k]) k++;
+    // a last word that looks like the first half of FingerScribe ("finger", "singer") waits for the next piece before being said
+    const last = out[out.length - 1] || '', lw = last.toLowerCase();
+    if (out.length > k && !BRAND[lw] && lw.length >= 4 && lw.length <= 7 && WordReader.edit(lw, 'finger'.slice(0, lw.length)) <= 2) {
+      out.pop(); D.hold = last; D.holdT = setTimeout(() => { if (D.hold && D.speak && synth) { synth.speak(utter(D.hold)); said.push(D.hold); } D.hold = null; }, 1800);
+    }
+    said.splice(said.length - prev.length, prev.length, ...out); if (said.length > 50) said.splice(0, said.length - 50);
+    return out.slice(k).join(' ');
+  } catch (e) { said.push(...add); return add.join(' '); }
+}
 function demoWords(confirmed, pending) {          // called by the reader: new confirmed words + the provisional tail
   if (confirmed.length) { D.words.push(...confirmed); D.fresh = confirmed.length; if (D.words.length > 400) D.words.splice(0, 100);
-    if (D.speak && synth) synth.speak(utter(confirmed.join(' '))); }
+    if (D.speak && synth) { const say = spokenWords(confirmed); if (say) synth.speak(utter(say)); } }
   D.pending = pending || [];
   demoRender();
 }
@@ -1847,7 +1979,7 @@ $('connect').onclick = connect;
 const N = { openId: null, pending: [], q: '', delArm: 0, writingUntil: 0, tilt: [0, 0, 0], lastT: 0 };
 const noteById = id => entries.find(e => e.id === id);
 const noteTitle = e => (e.text || '').split('\n').find(l => l.trim()) || 'New Note';
-const notePreview = e => { const ls = (e.text || '').split('\n').filter(l => l.trim()); return ls[1] || (ls[0] && ls[0].length > 40 ? ls[0].slice(40) : '') || 'No additional text'; };
+const notePreview = e => { const ls = (e.text || '').split('\n').filter(l => l.trim()); return ls[1] || 'No additional text'; };
 function whenLabel(t) {
   const d = new Date(t), now = new Date(), days = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 864e5);
   if (days === 0) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -1877,6 +2009,76 @@ function stampLabel(t) {
   const hm = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   return today ? hm : d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + hm;
 }
+/* ---- (29 Oct) words that heal themselves: when the reader (or Nemotron) changes a word you can see, its letters
+ * rearrange into the new word instead of the text just swapping. Letters both words share glide to their new places,
+ * letters that leave dissolve downwards, new letters condense in from a blur, and a soft light sweeps the word. */
+const HEAL = {
+  sel: '.w,.gw,.early',
+  charRects(el) {                       // where each letter of a word sits on screen right now
+    const out = [], tn = el.firstChild; if (!tn || tn.nodeType !== 3) return out;
+    const r = document.createRange();
+    for (let i = 0; i < tn.length; i++) { r.setStart(tn, i); r.setEnd(tn, i + 1); const b = r.getBoundingClientRect(); out.push({ c: tn.data[i], x: b.left, y: b.top, w: b.width, h: b.height }); }
+    return out;
+  },
+  before() {
+    if (settings.heal === false || matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
+    const els = [...$('nBody').querySelectorAll(this.sel)];
+    // letter positions only for the newest words: that's where the reader and Nemotron make their changes
+    return els.length > 1500 ? null : els.map((el, i) => ({ t: el.textContent, el, rects: i >= els.length - 16 ? this.charRects(el) : null }));
+  },
+  lcs(a, b) {                           // which letters the old and new word share, in order: pairs [i in a, j in b]
+    const D = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+    for (let i = a.length - 1; i >= 0; i--) for (let j = b.length - 1; j >= 0; j--) D[i][j] = a[i].toLowerCase() === b[j].toLowerCase() ? D[i + 1][j + 1] + 1 : Math.max(D[i + 1][j], D[i][j + 1]);
+    const P = []; let i = 0, j = 0;
+    while (i < a.length && j < b.length) { if (a[i].toLowerCase() === b[j].toLowerCase()) { P.push([i, j]); i++; j++; } else if (D[i + 1][j] >= D[i][j + 1]) i++; else j++; }
+    return P;
+  },
+  after(prev, appending) {
+    if (!prev) return;
+    const els = [...$('nBody').querySelectorAll(this.sel)], A = prev.map(p => p.t), B = els.map(e => e.textContent);
+    let p = 0; while (p < A.length && p < B.length && A[p] === B[p]) p++;
+    let q = 0; while (q < A.length - p && q < B.length - p && A[A.length - 1 - q] === B[B.length - 1 - q]) q++;
+    const n = Math.min(A.length - p - q, B.length - p - q);
+    if (n <= 0 || n > 6) return;        // nothing changed (or a whole rewrite, which isn't a heal)
+    const extra = (A.length - p - q) - n;          // words that merged away (e.g. "finger sri be" -> "FingerScribe")
+    for (let k = 0; k < n; k++) {
+      let o = prev[p + k]; const el = els[p + k];
+      if (k === n - 1 && extra > 0) { const grp = prev.slice(p + k, p + k + 1 + extra); if (grp.every(g => g.rects)) o = { t: grp.map(g => g.t).join(''), rects: grp.flatMap(g => g.rects) }; }
+      if (o.t.trim().toLowerCase() === el.textContent.trim().toLowerCase()) continue;
+      if (o.rects) this.morph(o.rects, o.t, el);
+    }
+  },
+  morph(oldR, oldT, el) {
+    const newT = el.textContent; if (!newT.trim()) return;
+    if (!oldR.length) return;
+    el.innerHTML = [...newT].map(c => `<span class="hl">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('');
+    el.classList.add('healing');
+    const L = [...el.children], pairs = this.lcs(oldR.map(r => r.c), [...newT]), toOld = new Map(pairs.map(([i, j]) => [j, i])), kept = new Set(pairs.map(([i]) => i));
+    const ease = 'cubic-bezier(.2,.9,.25,1.15)';
+    L.forEach((s, j) => {
+      const nb = s.getBoundingClientRect();
+      if (toOld.has(j)) { const o = oldR[toOld.get(j)];
+        s.animate([{ transform: `translate(${o.x - nb.left}px,${o.y - nb.top}px)` }, { transform: 'translateY(-.12em)', offset: .55 }, { transform: 'none' }], { duration: 760, easing: ease, delay: j * 18 });
+      } else {
+        // a new letter "thinks": it flickers through candidate letters, then settles on the right one
+        const fin = s.textContent, AZ = 'abcdefghijklmnopqrstuvwxyz', until = performance.now() + 260 + j * 45;
+        const tick = () => { if (!s.isConnected) return; if (performance.now() < until) { s.textContent = AZ[Math.random() * 26 | 0]; setTimeout(tick, 45); } else s.textContent = fin; };
+        tick();
+        s.animate([{ opacity: 0, filter: 'blur(8px)', transform: 'translateY(-.55em) scale(1.4)', color: 'var(--n-heal)', textShadow: '0 0 12px var(--n-heal-glow)' }, { opacity: 1, filter: 'blur(0)', transform: 'none', color: 'var(--n-heal)', textShadow: '0 0 8px var(--n-heal-glow)', offset: .55 }, { color: 'inherit' }],
+          { duration: 900, easing: 'cubic-bezier(.2,.8,.2,1)', delay: 60 + j * 35, fill: 'backwards' });
+      }
+    });
+    // letters that don't survive: drawn where they were, then dissolve
+    const layer = document.body.appendChild(document.createElement('div')); layer.className = 'heal-layer';
+    const cs = getComputedStyle(el);
+    oldR.forEach((o, i) => { if (kept.has(i) || !o.c.trim()) return;
+      const g = layer.appendChild(document.createElement('span')); g.textContent = o.c;
+      Object.assign(g.style, { left: o.x + 'px', top: o.y + 'px', font: cs.font, letterSpacing: cs.letterSpacing, color: cs.color, lineHeight: o.h + 'px' });
+      g.animate([{ opacity: 1, transform: 'none', filter: 'blur(0)' }, { opacity: 0, transform: `translate(${(i % 2 ? 1 : -1) * 4}px,.5em) scale(.6) rotate(${(i % 2 ? 1 : -1) * 18}deg)`, filter: 'blur(4px)' }], { duration: 620, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' });
+    });
+    setTimeout(() => { layer.remove(); if (el.isConnected && el.classList.contains('healing')) { el.textContent = newT; el.classList.remove('healing'); } }, 1400);
+  },
+};
 function renderBody(animateFrom = -1) {
   const e = noteById(N.openId); if (!e) return;
   const t = e.text || '', head = animateFrom >= 0 ? t.slice(0, animateFrom) : t, tail = animateFrom >= 0 ? t.slice(animateFrom) : '';
@@ -1889,10 +2091,12 @@ function renderBody(animateFrom = -1) {
     const when = mi >= 0 ? marks[mi][1] : (e.t || e.u), cls = (animateFrom >= 0 && i0 >= animateFrom ? 'w inkin' : 'w');
     return `<span class="${cls}" data-m="${mi}" data-ts="${esc(stampLabel(when))}">${esc(p)}</span>`;
   });
+  const healPrev = HEAL.before();
   $('nBody').innerHTML = words.join('')
     + (N.pending.length ? (() => { const ew = W.early && N.pending[N.pending.length - 1] === W.early, gw = ew ? N.pending.slice(0, -1) : N.pending, sp = t && !/\s$/.test(t) ? ' ' : '';
-        return (gw.length ? `<span class="ghost" contenteditable="false">${sp}${esc(gw.join(' '))}</span>` : '') + (ew ? `${gw.length || sp ? '<span class="ghost" contenteditable="false"> </span>' : ''}<span class="early" contenteditable="false">${esc(W.early)}</span>` : ''); })() : '')
+        return (gw.length ? `<span class="ghost" contenteditable="false">${sp}${gw.map(w => `<span class="gw">${esc(w)}</span>`).join(' ')}</span>` : '') + (ew ? `${gw.length || sp ? '<span class="ghost" contenteditable="false"> </span>' : ''}<span class="early" contenteditable="false">${esc(W.early)}</span>` : ''); })() : '')
     + '<span class="cm" contenteditable="false">​</span>';
+  HEAL.after(healPrev, animateFrom >= 0);
   $('nMeta').textContent = new Date(e.u || e.t).toLocaleString([], { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' });
   placePen();
 }
@@ -1924,6 +2128,7 @@ function appendToNote(words) {        // words: array of strings, or one string 
   const piece = (start ? cap(add) : add);
   const at = t.length + sep.length;
   e.text = t + sep + piece; e.u = now; e.lastAdd = now;
+  joinSpecial(e); while (joinCommon(e)); if (settings.numbers !== false) numberWords(e);
   (e.marks = e.marks || []).push([at, now]); if (e.marks.length > 2000) e.marks.splice(0, e.marks.length - 2000);   // when each piece was written
   saveEntries();
   if (Date.now() - (N.typedAt || 0) > 2000) renderBody(at); else placePen();
@@ -2001,7 +2206,7 @@ function queueTag(e, announce) {
 function mapStatus() {
   if (!MAP.on) return;
   const ns = mappable(), th = new Set(ns.flatMap(e => e.themes || []));
-  $('mStat').innerHTML = !ns.length ? '' : !aiReady() ? 'Nemotron is off (run start.bat), so notes are grouped by their most common word for now.'
+  $('mStat').innerHTML = !ns.length ? '' : !aiReady() ? 'Offline for now, so notes are grouped by their most common words.'
     : MAP.busy ? `<b>Nemotron</b> is reading your notes… ${MAP.busy} to go`
     : `<b>Nemotron</b> grouped ${ns.length} note${ns.length === 1 ? '' : 's'} into ${th.size} theme${th.size === 1 ? '' : 's'}`;
   $('mEmpty').hidden = !!ns.length;
@@ -2060,18 +2265,35 @@ function mapDraw() {
     ctx.fillStyle = col(h, age < 1 ? 1 : age < 7 ? .8 : .55); ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, 6.29); ctx.fill();
     if (n === MAP.hover) { ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1; }
   }
-  if (N2.length <= 40) {                         // short titles beside the dots
-    ctx.font = `400 11px ${cs.getPropertyValue('--n-font')}`; ctx.fillStyle = sub; ctx.textBaseline = 'middle';
-    for (const n of N2) { const T = MAP.themes.get(n.ts[0]), right = !T || n.x >= T.x, words = noteTitle(n.e).split(/\s+/).slice(0, 3).join(' ');
-      ctx.textAlign = right ? 'left' : 'right'; ctx.fillText(words.length > 22 ? words.slice(0, 21) + '…' : words, n.x + (right ? n.r + 5 : -n.r - 5), n.y); }
-  }
+  // theme labels first: measured, kept on screen, and reserved so note titles never sit on top of them
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const boxes = [], hit = (b) => boxes.some(o => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + o.h && b.y + b.h > o.y);
+  const themeDraw = [];
   for (const T of T2) {
     const cnt = N2.filter(n => n.ts.includes(T.t)).length, fs = Math.min(22, 13 + cnt * 1.5);
     ctx.font = `600 ${fs}px ${cs.getPropertyValue('--n-font')}`;
-    const w = ctx.measureText(T.t).width + 18;
-    ctx.fillStyle = dark ? 'rgba(28,28,30,.86)' : 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.roundRect(T.x - w / 2, T.y - fs * .8, w, fs * 1.6, fs * .8); ctx.fill();
-    ctx.fillStyle = col(T.hue, 1); ctx.fillText(T.t, T.x, T.y + 1);
+    const w = ctx.measureText(T.t).width + 18, x = Math.max(w / 2 + 6, Math.min(MAP.w - w / 2 - 6, T.x)), y = Math.max(fs + 4, Math.min(MAP.h - fs - 4, T.y));
+    boxes.push({ x: x - w / 2, y: y - fs * .8, w, h: fs * 1.6 }); themeDraw.push({ T, fs, w, x, y });
+  }
+  for (const n of N2) boxes.push({ x: n.x - n.r - 2, y: n.y - n.r - 2, w: n.r * 2 + 4, h: n.r * 2 + 4 });   // dots are obstacles too
+  if (N2.length <= 60) {                         // short titles beside the dots, newest first, only where they fit
+    ctx.font = `400 11px ${cs.getPropertyValue('--n-font')}`; ctx.fillStyle = sub; ctx.textBaseline = 'middle';
+    const order = [...N2].sort((a, b) => (a === MAP.hover ? -1 : b === MAP.hover ? 1 : 0) || ((b.e.u || b.e.t) - (a.e.u || a.e.t)));
+    for (const n of order) {
+      const T = MAP.themes.get(n.ts[0]), words = noteTitle(n.e).split(/\s+/).slice(0, 3).join(' '), txt = words.length > 22 ? words.slice(0, 21) + '…' : words;
+      const tw = ctx.measureText(txt).width, pref = !T || n.x >= T.x;
+      for (const right of [pref, !pref]) {
+        const bx = right ? n.x + n.r + 5 : n.x - n.r - 5 - tw, b = { x: bx - 2, y: n.y - 8, w: tw + 4, h: 16 };
+        if (bx < 4 || bx + tw > MAP.w - 4 || hit(b)) continue;
+        boxes.push(b); ctx.textAlign = 'left'; ctx.fillText(txt, bx, n.y); break;
+      }
+    }
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const { T, fs, w, x, y } of themeDraw) {
+    ctx.font = `600 ${fs}px ${cs.getPropertyValue('--n-font')}`;
+    ctx.fillStyle = dark ? 'rgba(28,28,30,.86)' : 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.roundRect(x - w / 2, y - fs * .8, w, fs * 1.6, fs * .8); ctx.fill();
+    ctx.fillStyle = col(T.hue, 1); ctx.fillText(T.t, x, y + 1);
   }
 }
 function mapLoop() {
@@ -2124,7 +2346,7 @@ $('nDelete').onclick = () => {
 $('nSpeakAuto').onclick = () => { D.speak = !D.speak; store.set('demoSpeak', D.speak); $('nSpeakAuto').classList.toggle('on', D.speak); toast(D.speak ? 'Speaking words out loud as you write' : 'Speaking off'); if (!D.speak && synth) synth.cancel(); };
 $('nTidy').onclick = async () => {
   const e = noteById(N.openId); if (!e || !e.text.trim()) return toast('Nothing to tidy yet.');
-  await proxyCheck; if (!aiReady()) return toast('Start the app with start.bat (or add a Nebius key in Settings) to use Nemotron.');
+  await proxyCheck; if (!aiReady()) return toast('This needs an internet connection. Try again when you’re online.');
   toast('Tidying…'); try { const t = await tidyText(e.text); if (t) { e.text = t; e.u = Date.now(); saveEntries(); renderBody(); toast('Tidied'); } } catch (err) { toast('Couldn’t tidy: ' + err.message.slice(0, 60)); }
 };
 $('nBig').onclick = demoOpen;
@@ -2169,7 +2391,7 @@ function openTeach(mode = 'letters') {
 $('tSurf').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; T.surface = b.dataset.s; [...$('tSurf').children].forEach(c => c.classList.toggle('on', c === b)); });
 function teachShow() {
   const n = T.queue.length;
-  if (T.i >= n) { $('tLetter').textContent = '✓'; $('tStatus').textContent = `Done: ${T.data.filter(d => d.surface === T.surface).length} ${T.mode === 'letters' ? 'letters' : T.mode} on ${T.surface}. Tap Save and send the file to Claude.`; return; }
+  if (T.i >= n) { $('tLetter').textContent = '✓'; $('tStatus').textContent = `Done: ${T.data.filter(d => d.surface === T.surface).length} ${T.mode === 'letters' ? 'letters' : T.mode} on ${T.surface}. Tap Save to keep the recording.`; return; }
   $('tLetter').textContent = T.queue[T.i]; $('tLetter').classList.remove('got');
   $('tStatus').textContent = T.mode === 'sentences' ? `Write the whole sentence at your normal speed, without stopping between words, on: ${T.surface}. Then hold still for 2 seconds.` : T.mode === 'words' ? `Write the whole word ${T.style === 'print' ? 'in your normal print' : 'in joined-up writing'} on: ${T.surface}. Then hold still.` : `Write it on: ${T.surface}. Then hold still.`; $('tBar').style.width = (T.i / n * 100) + '%';
   T.state = 'wait'; T.buf = [];
@@ -2380,7 +2602,7 @@ const DAY = {
   async make() {
     const T = this.todays();
     if (!T.length) { $('dBody').innerHTML = '<div class="dempty">Nothing written today yet.<br>Write a few thoughts with the sleeve and come back tonight.</div>'; return; }
-    if (!aiReady()) { $('dBody').innerHTML = '<div class="dempty">Start the app with start.bat so Nemotron can write your day.</div>'; return; }
+    if (!aiReady()) { $('dBody').innerHTML = '<div class="dempty">Your day appears here when you’re online.</div>'; return; }
     $('dBody').innerHTML = '<div class="dthink"><i></i>Nemotron is reading your day…</div>';
     const fmt = e => new Date(e.t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' — ' + e.text.replace(/\s+/g, ' ').trim();
     const today = T.map(fmt).join('\n');
@@ -2480,6 +2702,9 @@ function journalText(maxChars = 120000) {
   return out || '(empty)';
 }
 async function llm(model, messages, max = 600, extra = {}) {
+  // fast models answer without thinking: with it on, Lightning used the whole reply budget thinking and returned nothing
+  // (30 Oct) also Super: in Your day it spent all 1600 tokens thinking (finish_reason 'length') and wrote nothing
+  if (/nemotron|lightning|nano/i.test(model) && !extra.chat_template_kwargs) extra = Object.assign({ chat_template_kwargs: { enable_thinking: false } }, extra);
   const j = await tf('/chat/completions', Object.assign({ model, temperature: 0, max_tokens: max, messages }, extra));
   return j.choices?.[0]?.message || {};
 }
@@ -2544,12 +2769,13 @@ nemotronFix = async function (words, alts, segs) {
     const full = e.text || '', oldS = words.join(' '), at0 = full.toLowerCase().lastIndexOf(oldS.toLowerCase()), before = (at0 >= 0 ? full.slice(0, at0) : full).slice(-400);
     const opts = words.map((w, i) => [...new Set([w.toLowerCase(), ...((alts[i] || []).map(x => fixWord(x).toLowerCase()))])].slice(0, 4));
     const M = await mids();
-    const msg = await llm(M.fast, [
+    // word fixing uses Super (thinking off): in a side-by-side test Lightning and Nano just copied the sensor's first guesses
+    const msg = await llm(M.super, [
       { role: 'system', content: 'You help a handwriting sensor worn on a finger. The user\'s journal so far, oldest first:\n' + journalText() },
       { role: 'user', content: `${LEARN.hint()}The sensor read these words from the user's finger, with its candidates per position (best first). Earlier text: "${before.replace(/"/g, "'")}".
 Candidates: ${JSON.stringify(opts)}
-For each position give up to 3 words the user most likely wrote, best first. You MAY suggest a word that is not a candidate when it is a name, place or unusual word from their journal, or a real name/place that fits; spell it in lowercase letters. Also give its kind (word, name, place, number, email, phone) and the punctuation that belongs straight after it in natural written English ("", ",", ".", "?", "!" or ":"); end a finished thought with "." or "?".
-Reply with JSON only: {"pos": [{"opts": ["..."], "kind": "word", "after": ""}, ...]}` }], 400);
+The sensor's first candidate is often a near-miss of what they meant: when a later candidate is a real word, or a name or place from their journal, put it first. For each position give up to 3 words the user most likely wrote, best first. You MAY suggest a word that is not a candidate when it is a name, place or unusual word from their journal, or a real name/place that fits; spell it in lowercase letters. Also give its kind (word, name, place, number, email, phone) and the punctuation that belongs straight after it in natural written English ("", ",", ".", "?", "!" or ":"); end a finished thought with "." or "?".
+Reply with JSON only: {"pos": [{"opts": ["..."], "kind": "word", "after": ""}, ...]}` }], 400, { chat_template_kwargs: { enable_thinking: false } });
     const j = parseJ(msg.content); if (!j || !Array.isArray(j.pos) || j.pos.length !== words.length) return;
     const pick = [], kinds = [], after = j.pos.map(P => (P && /^[,.?!:]$/.test(P.after || '') ? P.after : ''));
     for (let i = 0; i < words.length; i++) {
@@ -2607,7 +2833,12 @@ async function agent(model, messages, max = 500, rounds = 2) {      // tool loop
   for (let r = 0; r <= rounds; r++) {
     let m; try { m = await llm(model, messages, max, r < rounds ? { tools: TOOLS, tool_choice: 'auto' } : {}); } catch (e) { if (r === 0) m = await llm(model, messages, max); else throw e; }
     const calls = m.tool_calls || [];
-    if (!calls.length) return { text: clean(m.content), sources };
+    const noCall = t => clean(t).replace(/<tool_call>[\s\S]*?(<\/tool_call>|$)/g, '').trim();   // a written tool call is not an answer
+    if (!calls.length) {
+      let t = noCall(m.content);
+      if (!t && r > 0) { messages.push({ role: 'user', content: 'Answer now in one to three short spoken sentences, using only the search results above. Do not search again.' }); t = noCall((await llm(model, messages, max)).content); }
+      return { text: t, sources };
+    }
     messages.push({ role: 'assistant', content: m.content || '', tool_calls: calls });
     for (const c of calls) {
       let q = ''; try { q = JSON.parse(c.function.arguments || '{}').query || ''; } catch {}
@@ -2627,7 +2858,7 @@ const TALK = {
   },
   say(t) { if (!this.speak || !synth || !t) return; synth.cancel(); synth.speak(utter(t)); },
   async send(text, alts) {
-    if (!aiReady()) { toast('Start the app with start.bat so FingerScribe can talk.'); return; }
+    if (!aiReady()) { toast('Talk needs an internet connection. Try again when you’re online.'); return; }
     this.msgs.push({ me: true, text }); this.draw(); $('tkLive').textContent = 'Thinking…';
     const M = await mids();
     const hint = alts && alts.some(a => a && a.length > 1) ? `\n(Written with a finger sensor; possible misreads. Candidates per word: ${JSON.stringify(alts)})` : '';
@@ -2665,7 +2896,7 @@ $('tkVoice').onclick = () => { TALK.speak = !TALK.speak; store.set('talkSpeak', 
 DAY.make = async function () {
   const T = this.todays();
   if (!T.length) { $('dBody').innerHTML = '<div class="dempty">Nothing written today yet.<br>Write a few thoughts with the sleeve and come back tonight.</div>'; return; }
-  if (!aiReady()) { $('dBody').innerHTML = '<div class="dempty">Start the app with start.bat so Nemotron can write your day.</div>'; return; }
+  if (!aiReady()) { $('dBody').innerHTML = '<div class="dempty">Your day appears here when you’re online.</div>'; return; }
   $('dBody').innerHTML = '<div class="dthink"><i></i>Nemotron is reading your day…</div>';
   const fmt = e => new Date(e.t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' — ' + e.text.replace(/\s+/g, ' ').trim();
   const today = T.map(fmt).join('\n'), M = await mids();
@@ -2682,11 +2913,22 @@ First, use web_search (up to 3 times) only where it helps me: questions I wrote,
  "question": ONE short question worth sitting with tonight; no advice}` },
   ];
   try {
-    const r = await agent(M.super, messages, 1600, 2), j = parseJ(r.text);
+    const r = await agent(M.super, messages, 1600, 2); let j = parseJ(r.text);
+    if (!j || !j.entry) {   // (30 Oct) Super once dropped a quote mark ("question": What small...?") and the whole day was lost: ask it to repair its own JSON
+      const fix = async extra => clean((await llm(M.super, [{ role: 'user', content: 'Turn this into valid JSON with exactly the same content and keys. Reply with the JSON only.\n\n' + String(r.text).slice(0, 8000) }], 1600, extra)).content);
+      let t = ''; try { t = await fix({ response_format: { type: 'json_object' } }); } catch { try { t = await fix({}); } catch {} }
+      j = parseJ(t);
+    }
     if (!j || !j.entry) throw new Error('no entry');
     const inks = T.flatMap(e => (e.inks || []).map(i => i.svg)).filter(Boolean).slice(0, 14);
     const answers = (j.answers || []).slice(0, 3).map(x => ({ q: String(x.q || ''), a: String(x.a || ''), src: x.url ? [{ url: String(x.url) }] : r.sources.slice(0, 1) }));
-    const data = { entry: String(j.entry).trim(), echoes: (j.echoes || []).slice(0, 3), answers, saved: j.saved || {}, question: String(j.question || '').trim(), inks, coach: LEARN.coach(), heal: LEARN.heal(), n: T.length, at: Date.now() };
+    // (30 Oct) an echo must come from an EARLIER day: Nemotron also sees today's notes in the journal and matched them to themselves
+    const todayLbl = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), isToday = d => String(d).trim().toLowerCase() === todayLbl.toLowerCase() || new Date(String(d) + ' ' + new Date().getFullYear()).toDateString() === new Date().toDateString();
+    const echoes = (j.echoes || []).map(x => Object.assign({}, x, { dates: (x.dates || []).filter(d => !isToday(d)) })).filter(x => x.dates.length);
+    // (30 Oct) 'Saved from today' only keeps to-dos that are actually in today's notes (Super also listed older ones)
+    const todayText = T.map(e => e.text).join('\n').toLowerCase(), saved = Object.assign({}, j.saved || {});
+    saved.todos = (saved.todos || []).filter(t => todayText.includes(String(t).replace(/^[☐\s]+/, '').toLowerCase().slice(0, 18)));
+    const data = { entry: String(j.entry).trim(), echoes: echoes.slice(0, 3), answers, saved, question: String(j.question || '').trim(), inks, coach: LEARN.coach(), heal: LEARN.heal(), n: T.length, at: Date.now() };
     store.set(this.key(), data); this.render(data);
   } catch (err) { $('dBody').innerHTML = `<div class="dempty">Couldn’t write your day: ${esc(String(err.message || err).slice(0, 80))}</div>`; }
 };
@@ -2733,6 +2975,7 @@ Object.assign(window, { WIT, LEX, TALK, agent, mids, journalText });
     [0, 0.25, 'written', 'coffee before the 9am. good start', ['sleep'], [13]],
     [0, 0.55, 'pocket', 'how long does it actually take to form a habit?', ['ideas'], [8, 19]],
     [0, 0.8, 'written', 'badminton tonight: focus on footwork', ['badminton'], [16]],
+    [5, '13:15', 'typed', 'Tobi says Nandos does the best peri-peri chicken', ['friends'], [11]],
   ];
   const id = i => 'demo_' + i;
   function seed() {
@@ -2752,12 +2995,120 @@ Object.assign(window, { WIT, LEX, TALK, agent, mids, journalText });
   }
   const line = document.createElement('div'); line.className = 'line';
   line.innerHTML = '<button class="pill ghost" id="sampleLoad">Load sample journal</button><button class="pill ghost" id="sampleClear">Remove sample notes</button>';
-  const anchor = $('clearAll') && $('clearAll').parentElement;
-  if (anchor) anchor.after(line);
+  const adv = $('advBody'), anchor = $('clearAll') && $('clearAll').parentElement;
+  if (adv) { const l = document.createElement('span'); l.className = 'sub'; l.textContent = 'Sample journal'; adv.append(l, line); } else if (anchor) anchor.after(line);
   $('sampleLoad').onclick = seed; $('sampleClear').onclick = unseed;
   const q = new URLSearchParams(location.search).get('demo');
   if (q === '1') seed(); else if (q === '0') unseed();
   window.DEMO = { seed, unseed };
+})();
+</script>
+
+<style>
+html.film{background:#0b0b0c}
+html.film body{width:430px;height:932px;margin:20px auto;position:relative;transform:translateZ(0);overflow:hidden;border-radius:46px;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+#simBadge{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);z-index:9999;font:500 11px/1 var(--f-ui);letter-spacing:.04em;padding:6px 10px;border-radius:999px;
+  background:rgba(0,0,0,.55);color:#fff;opacity:0;transition:opacity .25s;pointer-events:none}
+#simBadge.on{opacity:1}
+</style>
+<script>
+/* FILM MODE: scripted scenes for the demo video. Only the handwriting input is simulated; every model call is real. */
+'use strict';
+(() => {
+  if (new URLSearchParams(location.search).get('film') !== '1') return;
+  document.documentElement.classList.add('film');
+  const badge = document.createElement('div'); badge.id = 'simBadge'; badge.textContent = 'Simulated input'; document.body.append(badge);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  if (!entries.some(e => e.demo) && window.DEMO) DEMO.seed();
+  const home = () => { try { closeNote(); } catch {} try { TALK.close(); } catch {} try { closeMap(); } catch {} try { DAY.close(); } catch {} renderList(); };
+  // types words the way the reader delivers them: a provisional word growing letter by letter, then confirmed
+  async function write(words, final = true) {
+    badge.classList.add('on');
+    for (let i = 0; i < words.length; i++) {
+      const w = words[i];
+      for (let k = 1; k <= w.length; k++) { notesWords([], [w.slice(0, k)], false); await sleep(85); }
+      notesWords([w], [], i === words.length - 1 && final); await sleep(320);
+    }
+    badge.classList.remove('on');
+  }
+  let lastNote = null;
+  const S = {
+    async 1() {                 // write a note, then Nemotron fixes it using the journal
+      home(); await sleep(400); lastNote = newNote('', 'written'); await sleep(450); document.activeElement.blur(); await sleep(250);
+      const words = ['dinner', 'at', 'nandas', 'with', 'toby', 'on', 'friday'];
+      const alts = [[], [], ['nandos', 'pandas'], [], ['tobi', 'told'], [], []];
+      await write(words);
+      await nemotronFix(words, alts, null);
+    },
+    async 2() {                 // Talk: ask a question, Nemotron + Tavily answer
+      home(); await sleep(400); TALK.open(); await sleep(900);
+      await write(['is', 'nandos', 'open', 'late?']);
+    },
+    async 3() {                 // Mind map: the new note is filed by Nemotron and glides in
+      home(); await sleep(300); openMap(); await sleep(2500);
+      const e = lastNote || entries.filter(x => !x.demo).sort((a, b) => b.t - a.t)[0];
+      if (e) { e.tagU = null; queueTag(e, true); }
+    },
+    async 4() {                 // Your day: written fresh by Nemotron 3 Super
+      home(); await sleep(300); try { localStorage.removeItem('fs_' + DAY.key()); } catch {} DAY.open();
+    },
+    async 0() { home(); },
+  };
+  let busy = false;
+  addEventListener('keydown', async ev => {
+    if (busy || !(ev.key in S) || /INPUT|TEXTAREA/.test(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
+    busy = true; try { await S[ev.key](); } catch (e) { console.log('film', e); } try { document.activeElement.blur(); } catch {} busy = false;
+  });
+  window.FILM = S;
+})();
+</script>
+
+<style>
+/* DAY TIDY */
+#dBody .dsub{margin:0 0 22px}
+#dBody .dentry{font-size:21px;line-height:1.6}
+#dBody .dlbl{display:block;font:500 13px/1 var(--n-font);color:var(--n-sub);margin:30px 0 10px}
+#dBody .dhi{background:color-mix(in srgb,var(--n-ink) 5%,transparent);border-radius:18px;padding:18px 18px 14px;margin:26px 0 0}
+#dBody .dhi .dqq{font:600 16px/1.35 var(--n-font);margin:0 0 8px}
+#dBody .dhi .daa{font:400 17px/1.5 var(--n-font);margin:0}
+#dBody .dfoot{display:flex;align-items:center;gap:8px;margin-top:14px;font:400 12px/1 var(--n-font);color:var(--n-sub);flex-wrap:wrap}
+#dBody .dtav{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:color-mix(in srgb,#4a5fd6 13%,transparent);color:#4a5fd6;font:500 12px/1 var(--n-font)}
+#dBody .dtav svg{width:13px;height:13px}
+#dBody .dfoot a{color:var(--n-sub);text-decoration:none}
+#dBody .decho2{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-top:1px solid var(--n-sep)}
+#dBody .decho2:first-of-type{border-top:0}
+#dBody .decho2 b{font:500 15px/1.35 var(--n-font);flex:1;min-width:0}
+#dBody .decho2 span{font:400 13px/1 var(--n-font);color:var(--n-sub);white-space:nowrap}
+#dBody .dtodo{display:flex;gap:10px;align-items:baseline;padding:7px 0;font:400 16px/1.4 var(--n-font)}
+#dBody .dtodo i{width:15px;height:15px;border:1.5px solid var(--n-sub);border-radius:4px;flex:none;transform:translateY(2px)}
+#dBody .dq2{font:400 23px/1.4 Georgia,'Times New Roman',serif;margin:34px 0 10px;padding-top:22px;border-top:1px solid var(--n-sep)}
+#dBody .dq2 span{display:block;font:500 13px/1 var(--n-font);color:var(--n-sub);margin-bottom:12px}
+</style>
+<script>
+/* DAY TIDY: calmer Your day layout */
+'use strict';
+(() => {
+  const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
+  const two = t => { const s = String(t || '').match(/[^.!?]+[.!?]+/g); return s ? s.slice(0, 2).join(' ').trim() : String(t || ''); };
+  const TAV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>';
+  DAY.render = function (d) {
+    const date = new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' });
+    let h = `<h1 class="dtitle">${esc(date)}</h1><p class="dsub">${d.n} ${d.n === 1 ? 'thought' : 'thoughts'}, written without looking down</p>`;
+    h += `<div class="dentry">${esc(d.entry)}</div>`;
+    if (d.inks && d.inks.length) h += `<div class="dink" aria-label="Your actual strokes today">${d.inks.slice(0, 8).join('')}</div>`;
+    for (const x of (d.answers || []).slice(0, 1)) {
+      const src = (x.src || [])[0];
+      h += `<div class="dhi"><p class="dqq">${esc(x.q)}</p><p class="daa">${esc(two(x.a))}</p><div class="dfoot"><span class="dtav">${TAV}Searched with Tavily</span>${src ? `<a href="${esc(src.url)}" target="_blank" rel="noopener">${esc(host(src.url))}</a>` : ''}</div></div>`;
+    }
+    const ech = (d.echoes || []).slice(0, 2);
+    if (ech.length) h += `<span class="dlbl">You’ve written this before</span>` + ech.map(x => `<div class="decho2"><b>${esc(String(x.phrase || ''))}</b><span>${esc((x.dates || []).join(', '))}</span></div>`).join('');
+    const S = d.saved || {}, todos = (S.todos || []).filter(Boolean).slice(0, 3), cons = (S.contacts || []).filter(c => c && (c.email || c.phone)).slice(0, 2);
+    if (todos.length || cons.length) h += `<span class="dlbl">Saved for later</span>` + todos.map(t => `<div class="dtodo"><i></i>${esc(String(t).replace(/^☐\s*/, ''))}</div>`).join('') +
+      cons.map(c => `<div class="dtodo">${esc(c.name || '')} ${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ''} ${c.phone ? `<a href="tel:${esc(String(c.phone).replace(/\s+/g, ''))}">${esc(c.phone)}</a>` : ''}</div>`).join('');
+    if (d.question) h += `<div class="dq2"><span>One question for tonight</span>${esc(d.question)}</div>`;
+    h += `<p class="dsub" style="margin-top:26px">Written by NVIDIA Nemotron on Nebius</p>`;
+    $('dBody').innerHTML = h; this.cur = d;
+  };
 })();
 </script>
 </body>

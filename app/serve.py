@@ -2,7 +2,7 @@
 
 Run:  py serve.py        (start.bat does this)  ->  open http://localhost:8000
 Why a server: browsers block web pages from calling the Nebius API directly (CORS), and it keeps your API key
-out of the web page. The key is read from NEBIUS_API_KEY, or from nebius_key.txt in this folder (gitignored).
+out of the web page. The key is read from nebius_key.txt (this folder, or ../nemotron_test/), or NEBIUS_API_KEY.
 Only built-in Python modules are used."""
 import http.server, json, os, socketserver, sys, urllib.error, urllib.request
 
@@ -12,12 +12,13 @@ PORT = int(os.environ.get("PORT", "8000"))
 
 def load_key():
     if os.environ.get("NEBIUS_API_KEY"): return os.environ["NEBIUS_API_KEY"].strip()
-    f = os.path.join(HERE, "nebius_key.txt")
-    return open(f).read().strip() if os.path.exists(f) else ""
+    for p in ("nebius_key.txt", os.path.join("..", "nemotron_test", "nebius_key.txt")):
+        f = os.path.join(HERE, p)
+        if os.path.exists(f): return open(f).read().strip()
+    return ""
 KEY = load_key()
-WEIGHTS = ("model.json", "letters.json", "words_reader.json", "touch.json")   # trained on-phone models, not in the public repo
 
-def load_parakeet():   # NVIDIA Parakeet speech-to-text on a Nebius AI Cloud endpoint: URL + token, from env or app/parakeet.txt
+def load_parakeet():   # NVIDIA Parakeet speech-to-text on a Nebius AI Cloud endpoint: URL + token, from env or web/parakeet.txt
     url, tok = os.environ.get("PARAKEET_URL", ""), os.environ.get("PARAKEET_TOKEN", "")
     f = os.path.join(HERE, "parakeet.txt")
     if not url and os.path.exists(f):
@@ -25,7 +26,7 @@ def load_parakeet():   # NVIDIA Parakeet speech-to-text on a Nebius AI Cloud end
     return url.strip(), tok.strip()
 PARAKEET_URL, PARAKEET_TOKEN = load_parakeet()
 
-def load_tavily():     # Tavily key: env TAVILY_API_KEY or app/tavily_key.txt
+def load_tavily():     # Tavily key: env TAVILY_API_KEY or web/tavily_key.txt
     if os.environ.get("TAVILY_API_KEY"): return os.environ["TAVILY_API_KEY"].strip()
     f = os.path.join(HERE, "tavily_key.txt")
     return open(f).read().strip() if os.path.exists(f) else ""
@@ -75,7 +76,7 @@ class H(http.server.SimpleHTTPRequestHandler):
             except urllib.error.HTTPError as e: return self._send(e.code, e.read())
             except Exception as e: return self._send(502, json.dumps({"error": str(e)}).encode())
         if self.path == "/asr":
-            if not PARAKEET_URL: return self._send(404, b'{"error":"no Parakeet endpoint set (app/parakeet.txt)"}')
+            if not PARAKEET_URL: return self._send(404, b'{"error":"no Parakeet endpoint set (web/parakeet.txt)"}')
             n = int(self.headers.get("Content-Length") or 0)
             try: code, data = parakeet(self.rfile.read(n)); return self._send(code, data)
             except urllib.error.HTTPError as e: return self._send(e.code, e.read())
@@ -88,8 +89,6 @@ class H(http.server.SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     print("FingerScribe -> http://localhost:%d" % PORT)
-    missing = [w for w in WEIGHTS if not os.path.exists(os.path.join(HERE, w))]
-    if missing: print("Reader weights: missing", ", ".join(missing), "- handwriting won't be read locally (see README > Weights).")
     print("Tavily:", "set" if TAVILY_KEY else "not set (put tavily_key.txt next to serve.py)")
     print("Parakeet (Nebius endpoint):", "set" if PARAKEET_URL else "not set; voice notes use Nemotron Omni if available")
     if not KEY: print("Nemotron: no key found (put nebius_key.txt next to serve.py). The app works, without AI correction.")

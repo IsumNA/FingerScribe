@@ -136,7 +136,7 @@ The full walkthrough, including what to look for and how to check the model call
 Requires Python 3.9 or newer, standard library only.
 
 ```bash
-git clone https://github.com/Isumpna/FingerScribe.git
+git clone https://github.com/IsumNA/FingerScribe.git
 cd FingerScribe/app
 export NEBIUS_API_KEY=...        # Nebius Token Factory key (Windows: set NEBIUS_API_KEY=...)
 export TAVILY_API_KEY=...        # optional
