@@ -57,7 +57,7 @@ A journal is supposed to keep you present. Mine lived on my phone, the one thing
 
 ## Demo video
 
-▶️ **[Watch the 3-minute demo on YouTube](https://youtu.be/REPLACE_ME)**. It includes over a minute of the real sleeve on a finger, writing.
+▶️ **[Watch the 3-minute demo on YouTube](https://youtu.be/d5RBfHMUGaM)**. It includes over a minute of the real sleeve on a finger, writing.
 
 ## How NVIDIA Nemotron and Nebius are used
 

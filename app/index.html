@@ -1450,7 +1450,7 @@ function readerMotion(s, busy) {
 }
 const APOS = {"im": "I'm", "ive": "I've", "dont": "don't", "cant": "can't", "wont": "won't", "didnt": "didn't", "doesnt": "doesn't", "isnt": "isn't", "wasnt": "wasn't", "arent": "aren't", "couldnt": "couldn't", "wouldnt": "wouldn't", "shouldnt": "shouldn't", "havent": "haven't", "thats": "that's", "whats": "what's", "theres": "there's", "youre": "you're", "theyre": "they're", "lets": "let's", "youll": "you'll", "weve": "we've", "youve": "you've", "itll": "it'll", "aint": "ain't"};   // the reader has no apostrophe, so contractions come out as 'im', 'dont' ... shown properly here
 const LOCK_AFTER = 2;
-const BRAND = { fingerscribe: 'FingerScribe', nemotron: 'Nemotron', nvidia: 'NVIDIA', nebius: 'Nebius' };
+const BRAND = { fingerscribe: 'FingerScribe', nemotron: 'Nemotron', nvidia: 'NVIDIA', nebius: 'Nebius', cursive: 'cursive', handwriting: 'handwriting' };
 const CASEW = { fourier: 'Fourier', laplace: 'Laplace', gaussian: 'Gaussian', jacobian: 'Jacobian', hessian: 'Hessian', taylor: 'Taylor', newton: 'Newton' };
 const fixWord = w => APOS[w] || BRAND[w] || CASEW[w] || (w === 'i' ? 'I' : w);
 /* (29 Oct) long special words get split while you're still writing them ("finger sri be"): the first half locks before
